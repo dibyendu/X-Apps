@@ -10,6 +10,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
 
@@ -18,31 +19,33 @@ typedef struct {
 } point;
 
 const int windowWidth = 1024,
-              windowHeight = 768,
-              rectWidth = 800,
-              rectHeight = 500,
-              pointRadius = 4,
-              textFontSerial = 11,
-              numFontSerial = 12,
-              estimationFontSerial = 14;
+          windowHeight = 768,
+          rectWidth = 800,
+          rectHeight = 500,
+          pointRadius = 4;
 
 const char *text = "#000000",
-                *rect = "#00BBFF",
-                *pointColour = "#FF0000",
-                *curve = "#00FF00",
-                *message = "Bezier Curve";
+           *rect = "#00BBFF",
+           *pointColour = "#FF0000",
+           *curve = "#00FF00",
+           *message = "Bezier Curve";
 
 int *
-drawText(Display *d, Window *w, GC *gc, int textX, int textY, int fontNo, const char *str) {
+drawText(Display *d, Window *w, GC *gc, int textX, int textY, const char *str) {
     XFontStruct *font;
     char **list;
     int *textWidth_and_Height, returnNo;
 
     textWidth_and_Height = (int *) calloc(2, sizeof (int));
 
-    list = XListFonts(d, "-*-*-bold-r-normal--*-*-100-100-m-*-*", 200, &returnNo);
-    font = XLoadQueryFont(d, *(list + fontNo));
-    XFreeFontNames(list);
+    list = XListFonts(d, "-*-*-bold-r-normal--*-*-100-100-c-*-*", 200, &returnNo);
+    if (returnNo) {
+        srand(time(NULL));
+        static int fontIndex = -1;
+        fontIndex = fontIndex == -1 ? rand() % returnNo : fontIndex;
+        font = XLoadQueryFont(d, *(list + fontIndex));
+        XFreeFontNames(list);
+    }
 
     if (!font)
         return NULL;
@@ -137,10 +140,10 @@ int main() {
         switch (e.type) {
             case Expose:
                 exposeCount++;
-                drawText(d, &w, &textGc, 0, 0, textFontSerial, message);
+                drawText(d, &w, &textGc, 0, 0, message);
                 XDrawRectangle(d, w, rectGc, rectX, rectY, rectWidth, rectHeight);
                 if (exposeCount == 1)
-                    drawText(d, &w, &textGc, rectX + rectWidth / 2 - 180, rectY + rectHeight / 2, textFontSerial, "Press <h> for help");
+                    drawText(d, &w, &textGc, rectX + rectWidth / 2 - 180, rectY + rectHeight / 2, "Press <h> for help");
                 break;
             case KeyPress:
                 key = XLookupKeysym(&e.xkey, 0);
@@ -151,7 +154,7 @@ int main() {
                         noOfPoints = 0;
                     }
                     XClearWindow(d, w);
-                    drawText(d, &w, &textGc, 0, 0, textFontSerial, message);
+                    drawText(d, &w, &textGc, 0, 0, message);
                     XDrawRectangle(d, w, rectGc, rectX, rectY, rectWidth, rectHeight);
                 } else if (key == XK_h) {
                     XClearWindow(d, w);
@@ -163,17 +166,17 @@ int main() {
                         XNextEvent(d, &sube);
                         switch (sube.type) {
                             case Expose:
-                                drawText(d, &subw, &textGc, rectX - 80, rectY + 40, textFontSerial,
+                                drawText(d, &subw, &textGc, rectX - 80, rectY + 40,
                                         "* press <left mouse button> inside the rectangle");
-                                drawText(d, &subw, &textGc, rectX - 80, rectY + 80, textFontSerial,
+                                drawText(d, &subw, &textGc, rectX - 80, rectY + 80,
                                         "  to generate points");
-                                drawText(d, &subw, &textGc, rectX - 80, rectY + 160, textFontSerial,
+                                drawText(d, &subw, &textGc, rectX - 80, rectY + 160,
                                         "* press <right mouse button> to draw bezier curve");
-                                drawText(d, &subw, &textGc, rectX - 80, rectY + 240, textFontSerial,
+                                drawText(d, &subw, &textGc, rectX - 80, rectY + 240,
                                         "* press <c> to erase all");
-                                drawText(d, &subw, &textGc, rectX - 80, rectY + 320, textFontSerial,
+                                drawText(d, &subw, &textGc, rectX - 80, rectY + 320,
                                         "* press <h> for help");
-                                drawText(d, &subw, &textGc, rectX - 80, rectY + 400, textFontSerial,
+                                drawText(d, &subw, &textGc, rectX - 80, rectY + 400,
                                         "* press <any key> to exit from this screen");
                                 break;
                             case KeyPress:
@@ -183,7 +186,7 @@ int main() {
                     }
 end:
                     ;
-                    drawText(d, &w, &textGc, 0, 0, textFontSerial, message);
+                    drawText(d, &w, &textGc, 0, 0, message);
                     XDrawRectangle(d, w, rectGc, rectX, rectY, rectWidth, rectHeight);
                 } else exit(0);
                 break;
@@ -191,7 +194,7 @@ end:
                 if (e.xbutton.button == Button1) {
                     if (exposeCount == 1) {
                         XClearWindow(d, w);
-                        drawText(d, &w, &textGc, 0, 0, textFontSerial, message);
+                        drawText(d, &w, &textGc, 0, 0, message);
                         XDrawRectangle(d, w, rectGc, rectX, rectY, rectWidth, rectHeight);
                         exposeCount++;
                     }
@@ -203,7 +206,7 @@ end:
                         XFillArc(d, w, pointGc, e.xbutton.x - pointRadius, e.xbutton.y - pointRadius,
                                 pointRadius * 2, pointRadius * 2, 0, 360 * 64);
                         sprintf(buffer, "%d", noOfPoints);
-                        drawText(d, &w, &textGc, e.xbutton.x, e.xbutton.y, numFontSerial, buffer);
+                        drawText(d, &w, &textGc, e.xbutton.x, e.xbutton.y, buffer);
                         if (noOfPoints > 1)
                             XDrawLine(d, w, textGc, p[noOfPoints - 2].x, p[noOfPoints - 2].y, p[noOfPoints - 1].x, p[noOfPoints - 1].y);
                     }
@@ -215,7 +218,7 @@ end:
                         double t;
                         for (i = 0; i < noOfPoints; i++) {
                             sprintf(buffer, "%d", i + 1);
-                            drawText(d, &w, &invGc, (p + i)->x, (p + i)->y, numFontSerial, buffer);
+                            drawText(d, &w, &invGc, (p + i)->x, (p + i)->y, buffer);
                             XFillArc(d, w, invGc, (p + i)->x - pointRadius, (p + i)->y - pointRadius,
                                     pointRadius * 2, pointRadius * 2, 0, 360 * 64);
                             XFillArc(d, w, pointGc, (p + i)->x - pointRadius / 2, (p + i)->y - pointRadius / 2,
@@ -224,13 +227,13 @@ end:
                         for (i = 0; i < noOfPoints - 1; i++)
                             XDrawLine(d, w, textGc, p[i].x, p[i].y, p[i + 1].x, p[i + 1].y);
                         drawText(d, &w, &invGc, rectX + rectWidth / 4, rectY + rectHeight + (windowHeight - rectHeight) / 4,
-                                estimationFontSerial, "Done   % [                                          ]");
+                            , "Done   % [                                          ]");
                         textWidth_and_Height[0] = drawText(d, &w, &textGc, rectX + rectWidth / 4, rectY + rectHeight + (windowHeight - rectHeight) / 4,
-                                estimationFontSerial, "Done ");
+                            , "Done ");
                         textWidth_and_Height[1] = drawText(d, &w, &textGc, rectX + rectWidth / 4 + *textWidth_and_Height[0], rectY + rectHeight + (windowHeight - rectHeight) / 4,
-                                estimationFontSerial, "  % [");
+                            , "  % [");
                         drawText(d, &w, &textGc, rectX + rectWidth / 4 + *textWidth_and_Height[0]+ *textWidth_and_Height[1],
-                                rectY + rectHeight + (windowHeight - rectHeight) / 4, estimationFontSerial,
+                                rectY + rectHeight + (windowHeight - rectHeight) / 4,
                                 "                                          ]");
                         for (t = 0; t <= 1; t += 0.0000008) {
                             bezierNext.x = bezierNext.y = 0;
@@ -244,12 +247,12 @@ end:
                                 j++;
                                 sprintf(buffer, "%2d", i);
                                 drawText(d, &w, &invGc, rectX + rectWidth / 4 + *textWidth_and_Height[0],
-                                        rectY + rectHeight + (windowHeight - rectHeight) / 4, estimationFontSerial, buffer);
+                                        rectY + rectHeight + (windowHeight - rectHeight) / 4, buffer);
                                 drawText(d, &w, &textGc, rectX + rectWidth / 4 + *textWidth_and_Height[0],
-                                        rectY + rectHeight + (windowHeight - rectHeight) / 4, estimationFontSerial, buffer);
+                                        rectY + rectHeight + (windowHeight - rectHeight) / 4, buffer);
                                 if (i % 5 == 1) {
                                     textWidth_and_Height[2] = drawText(d, &w, &textGc, rectX + rectWidth / 4 + *textWidth_and_Height[0]+ *textWidth_and_Height[1] + temp,
-                                            rectY + rectHeight + (windowHeight - rectHeight) / 4, estimationFontSerial, "==");
+                                            rectY + rectHeight + (windowHeight - rectHeight) / 4, "==");
                                     temp += *textWidth_and_Height[2];
                                 }
                             }
@@ -257,11 +260,11 @@ end:
                             bezierPrev.y = bezierNext.y;
                         }
                         drawText(d, &w, &invGc, rectX + rectWidth / 4 + *textWidth_and_Height[0],
-                                rectY + rectHeight + (windowHeight - rectHeight) / 4, estimationFontSerial, buffer);
+                                rectY + rectHeight + (windowHeight - rectHeight) / 4, buffer);
                         drawText(d, &w, &textGc, rectX + rectWidth / 4 + *textWidth_and_Height[0],
-                                rectY + rectHeight + (windowHeight - rectHeight) / 4, estimationFontSerial, "100%");
+                                rectY + rectHeight + (windowHeight - rectHeight) / 4, "100%");
                         drawText(d, &w, &textGc, rectX + rectWidth / 4 + *textWidth_and_Height[0]+ *textWidth_and_Height[1] + temp,
-                                rectY + rectHeight + (windowHeight - rectHeight) / 4, estimationFontSerial, "==");
+                                rectY + rectHeight + (windowHeight - rectHeight) / 4, "==");
                         free(p);
                         p = NULL;
                         noOfPoints = 0;
