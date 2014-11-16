@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <math.h>
+#include <time.h>
 #include <complex.h>
 #include <string.h>
 #include <X11/Xlib.h>
@@ -73,9 +74,13 @@ drawText(Display *d, int screen, Window *w, GC *gc, const char *str) {
     char **list;
     int textWidth, textHeight, textX, textY, returnNo;
 
-    list = XListFonts(d, "-*-*-bold-r-normal--*-*-100-100-m-*-*", 200, &returnNo);
-    font = XLoadQueryFont(d, *(list + 11));
-    XFreeFontNames(list);
+    list = XListFonts(d, "-*-*-bold-r-normal--*-*-100-100-c-*-*", 200, &returnNo);
+    if (returnNo) {
+        srand(time(NULL));
+        static int fontIndex = rand() % returnNo;
+        font = XLoadQueryFont(d, *(list + fontIndex));
+        XFreeFontNames(list);
+    }
 
     if (!font)
         return -1;
