@@ -227,11 +227,11 @@ end:
                         for (i = 0; i < noOfPoints - 1; i++)
                             XDrawLine(d, w, textGc, p[i].x, p[i].y, p[i + 1].x, p[i + 1].y);
                         drawText(d, &w, &invGc, rectX + rectWidth / 4, rectY + rectHeight + (windowHeight - rectHeight) / 4,
-                            , "Done   % [                                          ]");
+                            "Done   % [                                          ]");
                         textWidth_and_Height[0] = drawText(d, &w, &textGc, rectX + rectWidth / 4, rectY + rectHeight + (windowHeight - rectHeight) / 4,
-                            , "Done ");
+                            "Done ");
                         textWidth_and_Height[1] = drawText(d, &w, &textGc, rectX + rectWidth / 4 + *textWidth_and_Height[0], rectY + rectHeight + (windowHeight - rectHeight) / 4,
-                            , "  % [");
+                            "  % [");
                         drawText(d, &w, &textGc, rectX + rectWidth / 4 + *textWidth_and_Height[0]+ *textWidth_and_Height[1],
                                 rectY + rectHeight + (windowHeight - rectHeight) / 4,
                                 "                                          ]");
