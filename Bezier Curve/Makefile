@@ -1,5 +1,5 @@
 all :
-	cc -Wall -lm `pkg-config --cflags --libs x11` bezier.c -o bezier
+	cc -Wall bezier.c -o bezier -lm `pkg-config --cflags --libs x11`
 
 clean :
 	rm -f bezier
